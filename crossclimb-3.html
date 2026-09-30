@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crossclimb</title>
+<style>
+  :root {
+    --blue: #0a66c2;
+    --blue-dark: #004182;
+    --bg: #f3f2ef;
+    --text: #1d2226;
+    --muted: #666666;
+    --border: #d0d7de;
+    --green: #057642;
+    --green-soft: #eefaf2;
+    --error: #b42318;
+    --error-soft: #fff1f0;
+    --blue-soft: #eef6ff;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 20px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Arial, Helvetica, sans-serif;
+  }
+
+  .page {
+    max-width: 850px;
+    margin: 0 auto;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px 24px 30px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  }
+
+  .brand {
+    text-align: center;
+    font-size: 29px;
+    line-height: 1.1;
+    font-weight: 700;
+    letter-spacing: -0.4px;
+    margin: 0 0 6px;
+  }
+
+  .title {
+    text-align: center;
+    color: var(--blue);
+    font-size: 30px;
+    line-height: 1.1;
+    margin: 0 0 30px;
+    font-weight: 700;
+  }
+
+  .ladder {
+    max-width: 430px;
+    margin: 0 auto;
+  }
+
+  .slot {
+    min-height: 58px;
+    margin: 8px 0;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    background: #fafafa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+
+  .slot.locked {
+    background: var(--blue-soft);
+    border-color: #c9def4;
+    font-size: 22px;
+  }
+
+  .slot.guessed {
+    background: #fff;
+  }
+
+  .initial-slot {
+    color: var(--muted);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  .slot.revealed {
+    background: var(--green-soft);
+    border-color: #b7dfc8;
+    color: var(--green);
+  }
+
+  .word-wrap {
+    width: 100%;
+    min-height: 54px;
+    padding: 5px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .word {
+    width: 170px;
+    text-align: center;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  .arrow {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: var(--blue);
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 38px;
+    cursor: pointer;
+    flex: 0 0 38px;
+  }
+
+  .arrow:hover:not(:disabled) { background: var(--blue-dark); }
+  .arrow:disabled { opacity: 0.35; cursor: default; }
+
+  #clues {
+    margin-top: 30px;
+  }
+
+  .clue {
+    margin: 0 0 18px;
+  }
+
+  .clue:last-child { margin-bottom: 0; }
+
+  .clue label {
+    display: block;
+    margin-bottom: 7px;
+    font-size: 16px;
+    line-height: 1.45;
+  }
+
+  .answer-input,
+  .hidden-input {
+    width: 100%;
+    padding: 11px 12px;
+    border: 2px solid var(--border);
+    border-radius: 9px;
+    background: #fff;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 17px;
+    outline: none;
+  }
+
+  /* Hidden-word inputs deliberately use the same typography as ladder words. */
+  .hidden-input {
+    height: 54px;
+    padding: 5px 8px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    text-align: center;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .hidden-input:focus {
+    outline: none;
+  }
+
+  .hidden-input::placeholder {
+    font: inherit;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    opacity: 1;
+  }
+
+  .answer-input:focus,
+  .hidden-input:focus {
+    border-color: var(--blue);
+  }
+
+  .answer-input.correct {
+    background: var(--green-soft);
+    border-color: var(--green);
+    color: var(--green);
+  }
+
+  .answer-input:disabled {
+    opacity: 1;
+  }
+
+  #orderArea,
+  #hiddenStage,
+  #finalMessage {
+    display: none;
+  }
+
+  #orderArea {
+    margin-top: 30px;
+    text-align: center;
+  }
+
+  .order-instruction {
+    max-width: 700px;
+    margin: 0 auto 14px;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  .primary {
+    background: var(--blue);
+    color: #fff;
+    border: 0;
+    border-radius: 8px;
+    padding: 11px 20px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .primary:hover:not(:disabled) { background: var(--blue-dark); }
+  .primary:disabled { opacity: 0.7; cursor: default; }
+
+  #feedback {
+    min-height: 24px;
+    margin: 12px 0 0;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  #feedback.success { color: var(--green); }
+  #feedback.error { color: var(--error); }
+
+  #hiddenStage {
+    margin: 26px auto 0;
+    max-width: 760px;
+    text-align: center;
+  }
+
+  .hidden-clue-text {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.55;
+  }
+
+  .hidden-answer-feedback {
+    min-height: 24px;
+    margin-top: 14px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--green);
+  }
+
+  #finalMessage {
+    margin: 28px auto 0;
+    max-width: 650px;
+    padding: 20px;
+    border-radius: 12px;
+    background: var(--green-soft);
+    border: 1px solid #b7dfc8;
+    color: var(--green);
+    text-align: center;
+    font-size: 17px;
+    line-height: 1.5;
+    font-weight: 700;
+  }
+
+  .fade-in { animation: fadeIn 0.35s ease both; }
+  .pop { animation: pop 0.35s ease both; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes pop {
+    0% { transform: scale(0.97); opacity: 0.45; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  @media (max-width: 560px) {
+    body { padding: 12px; }
+    .card { padding: 24px 16px 26px; }
+    .brand { font-size: 25px; }
+    .title { font-size: 28px; margin-bottom: 26px; }
+    .word { width: 140px; }
+    .slot { min-height: 56px; }
+    .order-instruction { font-size: 15px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="card">
+    <div class="brand">LinkedIn Games+</div>
+    <h1 class="title">Crossclimb</h1>
+
+    <div id="ladder" aria-label="Crossclimb ladder">
+      <div id="topSlot" class="slot locked" aria-label="Top hidden word">🔒</div>
+      <div id="slot0" class="slot initial-slot">_ _ _ _ _</div>
+      <div id="slot1" class="slot initial-slot">_ _ _ _ _</div>
+      <div id="slot2" class="slot initial-slot">_ _ _ _ _</div>
+      <div id="slot3" class="slot initial-slot">_ _ _ _ _</div>
+      <div id="slot4" class="slot initial-slot">_ _ _ _ _</div>
+      <div id="bottomSlot" class="slot locked" aria-label="Bottom hidden word">🔒</div>
+    </div>
+
+    <div id="clues" class="fade-in" aria-live="polite"></div>
+
+    <div id="orderArea">
+      <p class="order-instruction">
+        Arrange the words so that only one letter changes at a time to reveal the last two clues.
+      </p>
+      <button id="checkOrderButton" class="primary" type="button">Check order</button>
+      <p id="feedback" aria-live="polite"></p>
+    </div>
+
+    <div id="hiddenStage" class="fade-in" aria-live="polite">
+      <p id="hiddenClueText" class="hidden-clue-text"></p>
+      <p id="hiddenFeedback" class="hidden-answer-feedback" aria-live="polite"></p>
+    </div>
+
+    <div id="finalMessage" class="fade-in"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   PUZZLE DATA
+   For other crossclimbs, replace only the values in this object.
+   ============================================================ */
+const puzzle = {
+  clues: [
+    {
+      text: "Así se te hace una tarde, una conversación o una sobremesa con una persona especial (de Soria, por ejemplo). Se pasa volando.",
+      answer: "AMENA"
+    },
+    {
+      text: "Lo que quizá deberías decirle a alguien antes de que una tarde aparentemente normal acabe complicándose. También se suele escuchar cuando un coche está a punto de estamparse.",
+      answer: "FRENA"
+    },
+    {
+      text: "¡Demuestra que todavía sabes de química! Sustancia derivada del amoniaco por sustitución de uno o dos átomos de hidrógeno por radicales alifáticos o aromáticos.",
+      answer: "AMINA"
+    },
+    {
+      text: "Material granular que cubre determinados terrenos. La puedes encontrar en las playas por las que has abandonado a tus amigos.",
+      answer: "ARENA"
+    },
+    {
+      text: "Fruta roja que en italiano se escribe 'FRAGOLA'.",
+      answer: "FRESA"
+    }
+  ],
+
+  solution: ["AMINA", "AMENA", "ARENA", "FRENA", "FRESA"],
+
+  topHidden: {
+    // clue: "Una de estas palabras desapareció aquella tarde.",
+    answer: "AMIGA"
+  },
+
+  bottomHidden: {
+    // clue: "La otra describe bastante bien cómo estaban las bandejas de Spritz.",
+    answer: "PRESA"
+  },
+
+  finalMessage: "🎉 Congratulations! You’ve completed the Crossclimb"
+};
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let clueToSlot = [];
+let slotWords = [null, null, null, null, null];
+let currentOrder = [];
+let solutionDirection = "forward";
+let hiddenSolved = { top: false, bottom: false };
+
+const cluesContainer = document.getElementById("clues");
+const topSlot = document.getElementById("topSlot");
+const bottomSlot = document.getElementById("bottomSlot");
+const orderArea = document.getElementById("orderArea");
+const orderButton = document.getElementById("checkOrderButton");
+const feedback = document.getElementById("feedback");
+const hiddenStage = document.getElementById("hiddenStage");
+const hiddenFeedback = document.getElementById("hiddenFeedback");
+const hiddenClueText = document.getElementById("hiddenClueText");
+
+function normalize(value) {
+  return value
+    .trim()
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function arraysEqual(a, b) {
+  return a.length === b.length && a.every((value, index) => value === b[index]);
+}
+
+function differsByOneLetter(a, b) {
+  if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length) return false;
+  let differences = 0;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) differences++;
+    if (differences > 1) return false;
+  }
+  return differences === 1;
+}
+
+function shuffle(array) {
+  const result = [...array];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+function createInitialAssignment() {
+  const forward = puzzle.solution.map(normalize);
+  const reverse = [...forward].reverse();
+
+  // Assign each clue to a random, fixed slot. This means that when a clue is
+  // solved, its word immediately appears in that slot and stays there until
+  // the player starts moving words with the arrows.
+  do {
+    clueToSlot = shuffle([0, 1, 2, 3, 4]);
+
+    const candidate = Array(5).fill(null);
+    puzzle.clues.forEach((clue, clueIndex) => {
+      candidate[clueToSlot[clueIndex]] = clue.answer;
+    });
+
+    slotWords = candidate;
+  } while (arraysEqual(slotWords.map(normalize), forward) || arraysEqual(slotWords.map(normalize), reverse));
+
+  // Keep the slots empty until their corresponding clues are solved.
+  slotWords = [null, null, null, null, null];
+}
+
+function showSlotWord(slotIndex, word) {
+  const slot = document.getElementById(`slot${slotIndex}`);
+  slot.classList.remove("pop");
+  void slot.offsetWidth;
+  slot.classList.add("guessed", "pop");
+  slot.textContent = word;
+}
+
+/* ============================================================
+   INITIAL CLUES
+   ============================================================ */
+createInitialAssignment();
+
+puzzle.clues.forEach((clue, index) => {
+  const wrapper = document.createElement("div");
+  wrapper.className = "clue fade-in";
+  wrapper.innerHTML = `
+    <label for="clueInput${index}">${index + 1}. ${clue.text}</label>
+    <input
+      id="clueInput${index}"
+      class="answer-input"
+      type="text"
+      maxlength="5"
+      placeholder="_ _ _ _ _"
+      autocomplete="off"
+      autocapitalize="characters"
+      spellcheck="false"
+      aria-label="Answer to clue ${index + 1}"
+    >
+  `;
+  cluesContainer.appendChild(wrapper);
+
+  const input = document.getElementById(`clueInput${index}`);
+
+  input.addEventListener("input", () => handleClueInput(index));
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") handleClueInput(index);
+  });
+});
+
+function handleClueInput(index) {
+  const input = document.getElementById(`clueInput${index}`);
+  if (!input || input.disabled) return;
+
+  const expected = normalize(puzzle.clues[index].answer);
+  const entered = normalize(input.value);
+
+  if (entered !== expected) return;
+
+  input.value = puzzle.clues[index].answer;
+  input.disabled = true;
+  input.classList.add("correct");
+
+  // Put the guessed word into its own random slot immediately.
+  const slotIndex = clueToSlot[index];
+  slotWords[slotIndex] = puzzle.clues[index].answer;
+  showSlotWord(slotIndex, puzzle.clues[index].answer);
+
+  if (slotWords.every(Boolean)) {
+    startOrderingPhase();
+  }
+}
+
+/* ============================================================
+   ORDERING PHASE
+   ============================================================ */
+function startOrderingPhase() {
+  cluesContainer.style.display = "none";
+  currentOrder = [...slotWords];
+  renderOrderableLadder();
+  orderArea.style.display = "block";
+  orderArea.classList.remove("fade-in");
+  void orderArea.offsetWidth;
+  orderArea.classList.add("fade-in");
+}
+
+function renderOrderableLadder() {
+  currentOrder.forEach((word, index) => {
+    const slot = document.getElementById(`slot${index}`);
+    slot.classList.add("guessed");
+    slot.innerHTML = "";
+
+    const wrap = document.createElement("div");
+    wrap.className = "word-wrap";
+
+    const upButton = document.createElement("button");
+    upButton.type = "button";
+    upButton.className = "arrow";
+    upButton.textContent = "↑";
+    upButton.title = "Move up";
+    upButton.setAttribute("aria-label", `Move ${word} up`);
+    upButton.disabled = index === 0;
+    upButton.addEventListener("click", () => moveWordUp(index));
+
+    const wordDiv = document.createElement("div");
+    wordDiv.className = "word";
+    wordDiv.textContent = word;
+
+    const downButton = document.createElement("button");
+    downButton.type = "button";
+    downButton.className = "arrow";
+    downButton.textContent = "↓";
+    downButton.title = "Move down";
+    downButton.setAttribute("aria-label", `Move ${word} down`);
+    downButton.disabled = index === currentOrder.length - 1;
+    downButton.addEventListener("click", () => moveWordDown(index));
+
+    wrap.appendChild(upButton);
+    wrap.appendChild(wordDiv);
+    wrap.appendChild(downButton);
+    slot.appendChild(wrap);
+  });
+}
+
+function moveWordUp(index) {
+  if (index <= 0) return;
+  [currentOrder[index - 1], currentOrder[index]] = [currentOrder[index], currentOrder[index - 1]];
+  clearOrderFeedback();
+  renderOrderableLadder();
+}
+
+function moveWordDown(index) {
+  if (index >= currentOrder.length - 1) return;
+  [currentOrder[index], currentOrder[index + 1]] = [currentOrder[index + 1], currentOrder[index]];
+  clearOrderFeedback();
+  renderOrderableLadder();
+}
+
+function clearOrderFeedback() {
+  feedback.textContent = "";
+  feedback.className = "";
+}
+
+/* Direct event listener — more reliable in embedded environments than inline onclick. */
+orderButton.addEventListener("click", checkOrder);
+
+function checkOrder() {
+  const forward = puzzle.solution.map(normalize);
+  const reverse = [...forward].reverse();
+  const current = currentOrder.map(normalize);
+
+  if (arraysEqual(current, forward)) {
+    solutionDirection = "forward";
+    orderingIsCorrect();
+    return;
+  }
+
+  if (arraysEqual(current, reverse)) {
+    solutionDirection = "reverse";
+    orderingIsCorrect();
+    return;
+  }
+
+  let correctLinks = 0;
+  for (let i = 0; i < current.length - 1; i++) {
+    if (differsByOneLetter(current[i], current[i + 1])) correctLinks++;
+  }
+
+  feedback.className = "error";
+  feedback.textContent = `${correctLinks} of 4 links are correct.`;
+}
+
+function orderingIsCorrect() {
+  orderButton.disabled = true;
+  feedback.className = "success";
+  feedback.textContent = "✓ The order is correct!";
+
+  setTimeout(() => {
+    orderArea.style.display = "none";
+    revealHiddenStage();
+  }, 1000);
+}
+
+/* ============================================================
+   FINAL TWO WORDS
+   ============================================================ */
+function revealHiddenStage() {
+  const topAnswer = solutionDirection === "forward"
+    ? normalize(puzzle.topHidden.answer)
+    : normalize(puzzle.bottomHidden.answer);
+
+  const bottomAnswer = solutionDirection === "forward"
+    ? normalize(puzzle.bottomHidden.answer)
+    : normalize(puzzle.topHidden.answer);
+
+  topSlot.classList.remove("locked", "guessed", "revealed");
+  bottomSlot.classList.remove("locked", "guessed", "revealed");
+
+/*
+  const topClue = solutionDirection === "forward"
+    ? puzzle.topHidden.clue
+    : puzzle.bottomHidden.clue;
+
+  const bottomClue = solutionDirection === "forward"
+    ? puzzle.bottomHidden.clue
+    : puzzle.topHidden.clue;
+*/
+
+  hiddenClueText.textContent = "Una de estas palabras describe a una persona que conociste en Turín y que, por alguna razón, terminó apuntándose a prácticamente todos los planes (incluido Milán). La otra tiene multitud de definiciones: puede ser ibérica o pueden construirla los castores, pero también puede ser la comida de algún depredador (entre otras)."; // `${topClue} ${bottomClue}`;
+
+  topSlot.innerHTML = createHiddenInput("topHiddenInput", topAnswer);
+  bottomSlot.innerHTML = createHiddenInput("bottomHiddenInput", bottomAnswer);
+
+  hiddenStage.style.display = "block";
+  hiddenStage.classList.remove("fade-in");
+  void hiddenStage.offsetWidth;
+  hiddenStage.classList.add("fade-in");
+
+  const topInput = document.getElementById("topHiddenInput");
+  const bottomInput = document.getElementById("bottomHiddenInput");
+
+  topInput.addEventListener("input", () => validateHiddenWord("top"));
+  bottomInput.addEventListener("input", () => validateHiddenWord("bottom"));
+  topInput.addEventListener("keydown", handleHiddenEnter);
+  bottomInput.addEventListener("keydown", handleHiddenEnter);
+
+  topSlot.classList.add("pop");
+  bottomSlot.classList.add("pop");
+
+  setTimeout(() => topInput.focus(), 220);
+}
+
+function createHiddenInput(id, expectedAnswer) {
+  return `
+    <input
+      id="${id}"
+      class="hidden-input"
+      type="text"
+      maxlength="5"
+      placeholder="_ _ _ _ _"
+      autocomplete="off"
+      autocapitalize="characters"
+      spellcheck="false"
+      data-answer="${expectedAnswer}"
+      aria-label="Hidden word"
+    >
+  `;
+}
+
+function handleHiddenEnter(event) {
+  if (event.key !== "Enter") return;
+  const position = event.currentTarget.id === "topHiddenInput" ? "top" : "bottom";
+  validateHiddenWord(position);
+}
+
+function validateHiddenWord(position) {
+  const id = position === "top" ? "topHiddenInput" : "bottomHiddenInput";
+  const slot = position === "top" ? topSlot : bottomSlot;
+  const input = document.getElementById(id);
+
+  if (!input || hiddenSolved[position]) return;
+
+  const expected = normalize(input.dataset.answer);
+  const entered = normalize(input.value);
+
+  if (entered !== expected) return;
+
+  hiddenSolved[position] = true;
+  slot.innerHTML = expected;
+  slot.classList.add("revealed", "pop");
+
+  hiddenFeedback.textContent = "✓ Correct!";
+
+  if (hiddenSolved.top && hiddenSolved.bottom) {
+    finishGame();
+  }
+}
+
+function finishGame() {
+  hiddenFeedback.textContent = "";
+  const finalMessage = document.getElementById("finalMessage");
+  finalMessage.textContent = puzzle.finalMessage;
+  finalMessage.style.display = "block";
+  finalMessage.classList.remove("fade-in");
+  void finalMessage.offsetWidth;
+  finalMessage.classList.add("fade-in");
+}
+</script>
+</body>
+</html>
