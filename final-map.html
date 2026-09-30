@@ -76,7 +76,7 @@
   .completion-card{width:min(620px,calc(100% - 40px));padding:34px 36px 32px;background:rgba(255,255,255,.98);border:1px solid rgba(217,222,229,.95);border-radius:20px;box-shadow:0 25px 80px rgba(15,23,42,.18);text-align:center}
   .completion-kicker{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);margin-bottom:9px}
   .completion h2{font-size:34px;margin:0 0 11px;letter-spacing:-.03em}
-  .completion p{font-size:16px;line-height:1.6;color:#495566;margin:0 auto;max-width:510px;white-space:pre-line}
+  .completion p{font-size:16px;line-height:1.6;color:#495566;margin:0 auto;max-width:510px;white-space:pre-line;font-style:italic}
   .replay{margin-top:22px;border:1px solid var(--line);background:white;color:var(--text);border-radius:9px;padding:10px 15px;font-weight:750;cursor:pointer}
   .legal-note{position:absolute;right:18px;bottom:10px;font-size:9px;color:#9aa3ad;z-index:6;pointer-events:none}
 
@@ -132,7 +132,6 @@
 
     <div class="completion" id="completion">
       <div class="completion-card">
-        <div class="completion-kicker">Complete</div>
         <h2 id="completionTitle">PLACEHOLDER FINAL</h2>
         <p id="completionText">PLACEHOLDER FINAL TEXT</p>
         <button class="replay" id="replayBtn">Ver el recorrido de nuevo</button>
@@ -315,6 +314,19 @@ function setWorldView(){
   scene.style.top=`calc(50% - ${BASE_H/2}px)`;
 }
 
+function setInitialWorldView(){
+  // Start farther out and slightly west so Atlanta is reachable on narrow screens
+  // without requiring horizontal panning.
+  const scale = 0.75;
+  const center = xy(35, -35);
+  const w = BASE_W * scale;
+  const h = BASE_H * scale;
+  scene.style.width = w + 'px';
+  scene.style.height = h + 'px';
+  scene.style.left = `calc(50% - ${center.x * scale}px)`;
+  scene.style.top = `calc(50% - ${center.y * scale}px)`;
+}
+
 function setAustraliaApproachView(){
   // Vista intermedia más abierta y desplazada hacia el este para que Gold Coast
   // quede dentro del encuadre al pasar desde la ruta en camper.
@@ -412,7 +424,7 @@ replayBtn.addEventListener('click',replay);
 
 renderMarkers();
 setRouteState();
-setWorldView();
+setInitialWorldView();
 </script>
 </body>
 </html>
