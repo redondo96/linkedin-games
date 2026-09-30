@@ -315,10 +315,11 @@ function setWorldView(){
 }
 
 function setInitialWorldView(){
-  // Start farther out and slightly west so Atlanta is reachable on narrow screens
-  // without requiring horizontal panning.
-  const scale = 0.75;
-  const center = xy(35, -35);
+  // Start centered on North America rather than Europe.
+  // This keeps Atlanta directly visible on narrow/mobile screens, so no
+  // horizontal panning is needed before the first memory can be opened.
+  const scale = 0.78;
+  const center = xy(34, -84);
   const w = BASE_W * scale;
   const h = BASE_H * scale;
   scene.style.width = w + 'px';
@@ -328,10 +329,10 @@ function setInitialWorldView(){
 }
 
 function setAustraliaApproachView(){
-  // Vista intermedia más abierta y desplazada hacia el este para que Gold Coast
-  // quede dentro del encuadre al pasar desde la ruta en camper.
-  const scale = 0.52;
-  const center = xy(-18, 111);
+  // Open out to the eastern side of the map so Gold Coast is clearly visible
+  // on mobile when moving from the camper route to the final memory.
+  const scale = 0.54;
+  const center = xy(-22, 123);
   const w = BASE_W * scale;
   const h = BASE_H * scale;
   scene.style.width = w + 'px';
@@ -415,7 +416,7 @@ function replay(){
   unlocked=0;
   currentEvent=null;
   showingCard=false;
-  setWorldView();
+  setInitialWorldView();
   renderMarkers();
   setRouteState();
   intro.classList.remove('hidden');
